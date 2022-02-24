@@ -1,0 +1,16 @@
+{
+    "LOGIN": "Login",
+    "SETTING": "Setting",
+    "LANGUAGE": "Language",
+    "ABOUT": "About",
+    "LOGOUT": "Logout",
+    "LOGIN_FAILED": "Login Failed.\nPlease fill in your login credential.",
+    "FORGOT_PASSWORD": "Forgot Password",
+    "CLICK_HERE": "Click Here",
+    "SEND": "SEND",
+    "NEED_FILL": "Please fill this field",
+    "SAVE": "Save",
+    "MUST_AT_LEAST": "must be at least",
+    "CHAR": "characters",
+    "IS_REQ": "is required"
+}

@@ -1,0 +1,16 @@
+{
+    "LOGIN": "Masuk",
+    "SETTING": "Pengaturan",
+    "LANGUAGE": "Bahasa",
+    "ABOUT": "Tentang",
+    "LOGOUT": "Keluar",
+    "LOGIN_FAILED": "Login Gagal.\nMohon isi data login.",
+    "FORGOT_PASSWORD": "Lupa Password",
+    "CLICK_HERE": "Klik Disini",
+    "SEND": "Kirim",
+    "NEED_FILL": "Silahkan isi data ini",
+    "SAVE": "Simpan",
+    "MUST_AT_LEAST": "minimal harus",
+    "CHAR": "karakter",
+    "IS_REQ": "dibutuhkan"
+}

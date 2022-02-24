@@ -1,0 +1,7 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "files.associations": {
+        "*.ttml": "xml",
+        "*.ttss": "css"
+    }
+}

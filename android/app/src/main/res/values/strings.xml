@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">boilerplateRN</string>
+    <string name="notification_channel">notification_channel</string>
+</resources>
