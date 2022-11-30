@@ -1,19 +1,18 @@
-import React, {Component} from 'react';
-import {View, StyleSheet} from 'react-native';
-import {moderateScale} from '../../libs/scaling';
-import {Colors} from '../../themes';
+import React from 'react';
+import {StyleSheet} from 'react-native';
+import {PaddedView, Title} from '../../components';
+
+export default function Notification(props) {
+  return (
+    <PaddedView style={styles.container}>
+      <Title>Notification</Title>
+    </PaddedView>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.red,
-    paddingHorizontal: moderateScale(16),
+    justifyContent: 'center',
   },
 });
-
-export default class Notification extends Component {
-  render() {
-    return <View style={styles.container} />;
-  }
-}

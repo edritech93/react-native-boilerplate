@@ -1,6 +1,9 @@
+import {AndroidImportance} from '@notifee/react-native';
+import {Colors} from '../themes';
+
 export const BASE_URL = {
-  DEV: 'http://localhost:8080/',
-  LIVE: 'http://localhost:8080/',
+  DEV: 'http://157.230.38.16:8082/',
+  LIVE: 'http://157.230.38.16:8080/',
 };
 
 export const BASIC_AUTH = {
@@ -15,13 +18,14 @@ export const FETCH_STATUS = {
   UPDATE_FILTER: 'UPDATE_FILTER',
 };
 
-export const DATA_LANGUAGE = [
-  {
-    name: 'English',
-    id: 'en',
-  },
-  {
-    name: 'Bahasa Indonesia',
-    id: 'id',
-  },
-];
+export const NOTIF_CHANNEL_TRANSACTION = {
+  id: 'BOILERPLATE_TRANSACTION',
+  name: 'Boilerplate Notification',
+  description: 'Notification for Transaction',
+  importance: AndroidImportance.HIGH,
+  smallIcon: 'ic_notification',
+  color: Colors.primary,
+  sound: 'default',
+  vibration: true,
+  vibrationPattern: [300, 500],
+};

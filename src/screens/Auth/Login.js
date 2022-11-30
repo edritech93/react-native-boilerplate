@@ -2,28 +2,28 @@ import React, {useState, useEffect, Fragment} from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  View,
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
 import {
   PaddedView,
   ScrollView,
-  PrimaryButtonLoading,
-  Title,
   Inputs,
   Text,
+  PrimaryButton,
+  Title,
+  TextLink,
 } from '../../components';
+import {showLocalNotification} from '../../libs/NotificationService';
 import {moderateScale} from '../../libs/scaling';
+import {strings} from '../../constants/localize';
 import {STORAGE} from '../../actions/types';
-import {Fonts, Colors} from '../../themes';
-import {CommonStyle} from '../../styles';
 import {Helper} from '../../libs/Helper';
+import {Colors} from '../../themes';
 import {API} from '../../libs/api';
 import {Formik} from 'formik';
 import NavigationService from '../../libs/NavigationService';
 import ObjStorage from '../../libs/ObjStorage';
-import strings from '../../constants/localize';
 import * as Yup from 'yup';
 
 export default function Login(props) {
@@ -31,15 +31,8 @@ export default function Login(props) {
   const [initialData, setInitialData] = useState({
     username: '',
     password: '',
-    // username: 'user1@user.com',
-    // password: '123qwe',
   });
   const [tokenFcm, setTokenFcm] = useState(null);
-
-  async function _loadTokenFcm() {
-    const token = await Helper.getTokenFcm();
-    setTokenFcm(token);
-  }
 
   const validateSchema = Yup.object().shape({
     username: Yup.string().required(`Email ${strings.IS_REQ}`),
@@ -50,10 +43,10 @@ export default function Login(props) {
 
   useEffect(() => {
     async function _loadDataLogin() {
-      const dataLogin = await ObjStorage.get(STORAGE.LOGIN_SAVED);
-      if (dataLogin) {
+      const objLogin = await ObjStorage.get(STORAGE.LOGIN_SAVED);
+      if (objLogin) {
         setInitialData({
-          username: dataLogin.username,
+          username: objLogin.username,
           password: '',
         });
       }
@@ -62,25 +55,28 @@ export default function Login(props) {
     _loadTokenFcm();
   }, []);
 
+  async function _loadTokenFcm() {
+    const token = await Helper.getTokenFcm().catch(() => null);
+    console.log('------------------------------------');
+    console.log('_loadTokenFcm => ', token);
+    console.log('------------------------------------');
+    setTokenFcm(token);
+  }
+
   const _onSubmit = values => {
     setLoading(true);
-    const bodySave = {
-      username: values.username,
-    };
-    ObjStorage.set(STORAGE.LOGIN_SAVED, bodySave);
-
     const body = new FormData();
     body.append('grant_type', 'password');
     body.append('scope', 'api1 offline_access');
     body.append('username', values.username);
     body.append('password', values.password);
-
     API.singleRequest(API.login(body))
       .then(response => {
-        const dataLogin = response.data;
-        Helper.setToken(dataLogin.access_token);
-        Helper.setRefreshToken(dataLogin.refresh_token);
-        props.isLoginChange(true);
+        const objRes = response.data;
+        Helper.setToken(objRes.access_token);
+        Helper.setRefreshToken(objRes.refresh_token);
+        const bodySave = {username: values.username};
+        ObjStorage.set(STORAGE.LOGIN_SAVED, bodySave);
         _loadAnotherApi();
       })
       .catch(error => {
@@ -90,30 +86,10 @@ export default function Login(props) {
   };
 
   async function _loadAnotherApi() {
-    const token = await Helper.getTokenFcm().catch(() => '');
-    ObjStorage.set(STORAGE.DEVICE_TOKEN, token);
-
     API.singleRequest(API.getProfile())
       .then(response => {
-        const dataProfile = {
-          ...response.data.profile,
-          email: response.data.email,
-        };
-        props.profileChange(dataProfile);
-        const bodyToken = {
-          token,
-          deviceType: Platform.OS,
-        };
-        API.singleRequest(API.deviceAdd(bodyToken))
-          .then(() => {})
-          .catch(error => props.showAlert(error))
-          .finally(() => {
-            if (props.onModalProps) {
-              props.onModalProps();
-            }
-            setLoading(false);
-            _gotoDashboard();
-          });
+        props.profileChange(response.data);
+        _submitFcmToken();
       })
       .catch(error => {
         props.showAlert(error);
@@ -121,20 +97,41 @@ export default function Login(props) {
       });
   }
 
+  async function _submitFcmToken() {
+    const token = await Helper.getTokenFcm().catch(() => '');
+    ObjStorage.set(STORAGE.DEVICE_TOKEN, token);
+    const body = {
+      token,
+      deviceType: Platform.OS,
+    };
+    API.singleRequest(API.deviceAdd(body))
+      .then(() => {})
+      .catch(error => props.showAlert(error))
+      .finally(() => {
+        setLoading(false);
+        _gotoDashboard();
+      });
+  }
+
   function _gotoDashboard() {
     NavigationService.resetRoot('Dashboard');
   }
 
+  function _onShowNotification() {
+    showLocalNotification('Title Local Notif', 'Description Local Notif');
+  }
+
+  const _onPressForgot = () => {
+    props.showAlert({message: 'Comming Soon'});
+  };
+
   return (
     <PaddedView>
       <KeyboardAvoidingView
-        style={CommonStyle.flexOne}
+        style={styles.flex1}
         behavior={'padding'}
         enabled={Platform.OS === 'ios' ? true : false}>
         <ScrollView>
-          <Title style={{marginBottom: moderateScale(27)}}>
-            {strings.LOGIN}
-          </Title>
           <Formik
             initialValues={initialData}
             enableReinitialize={true}
@@ -150,102 +147,87 @@ export default function Login(props) {
               handleSubmit,
             }) => (
               <Fragment>
+                <Title style={styles.textTitle}>{'Login Here...'}</Title>
                 {/* NOTE: for testing only */}
                 <Inputs
                   title={'Token FCM'}
                   value={tokenFcm}
-                  onChange={value => {}}
-                  containerStyle={{marginBottom: moderateScale(15)}}
+                  onChangeText={value => {}}
+                  containerStyle={styles.wrapForm}
                 />
                 <Inputs
                   title={'Email'}
                   value={values.username}
                   onBlur={() => setFieldTouched('username')}
-                  onChange={handleChange('username')}
+                  onChangeText={handleChange('username')}
                   isError={touched.username && errors.username}
                   message={errors.username}
-                  containerStyle={{marginBottom: moderateScale(15)}}
+                  containerStyle={styles.wrapForm}
                 />
                 <Inputs
                   title={'Password'}
                   isPassword={true}
                   value={values.password}
                   onBlur={() => setFieldTouched('password')}
-                  onChange={handleChange('password')}
+                  onChangeText={handleChange('password')}
                   isError={touched.password && errors.password}
                   message={errors.password}
-                  containerStyle={{marginBottom: moderateScale(9.5)}}
+                  containerStyle={styles.wrapForm}
                 />
-                <TouchableOpacity style={styles.wrapForgot} onPress={() => {}}>
+                <TouchableOpacity
+                  style={styles.wrapForgot}
+                  onPress={_onPressForgot}>
                   <Text
                     style={
                       styles.textForgot
                     }>{`${strings.FORGOT_PASSWORD}?`}</Text>
                 </TouchableOpacity>
-
-                <PrimaryButtonLoading
-                  loading={loading}
+                <PrimaryButton
                   title={strings.LOGIN}
-                  disabled={!isValid}
+                  disabled={!isValid || loading}
+                  loading={loading}
                   onPress={handleSubmit}
-                  style={{marginBottom: moderateScale(32)}}
+                  style={styles.wrapForm}
                 />
               </Fragment>
             )}
           </Formik>
         </ScrollView>
       </KeyboardAvoidingView>
-      <View style={styles.wrapSignUp}>
-        <Text>{'Test Direct to'}</Text>
-        <TouchableOpacity
-          style={styles.wrapForgot}
-          onPress={() => _gotoDashboard()}>
-          <Text style={styles.textSignUp}>{' Dashboard'}</Text>
-        </TouchableOpacity>
-      </View>
+      <TextLink
+        title={'Go to Dashboard, '}
+        link={'Test'}
+        onPress={() => _gotoDashboard()}
+        style={styles.wrapForm}
+      />
+      <TextLink
+        title={'Local Notification, '}
+        link={'Test'}
+        onPress={() => _onShowNotification()}
+      />
     </PaddedView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex1: {
+    flex: 1,
+  },
+  textTitle: {
+    marginBottom: moderateScale(16),
+    marginTop: moderateScale(32),
+  },
+  wrapForm: {
+    marginBottom: moderateScale(8),
+  },
   wrapForgot: {
     alignSelf: 'flex-end',
-    marginBottom: moderateScale(26),
+    padding: moderateScale(8),
+    marginBottom: moderateScale(16),
   },
   textForgot: {
-    fontFamily: Fonts.type.medium,
     fontSize: moderateScale(14),
     lineHeight: moderateScale(17),
     color: Colors.primary,
-  },
-  wrapLine: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: moderateScale(16),
-  },
-  lineStyle: {
-    height: moderateScale(1),
-    width: moderateScale(150),
-    backgroundColor: Colors.black,
-    opacity: 0.3,
-  },
-  textSosmed: {
-    textAlign: 'center',
-    marginBottom: moderateScale(16),
-  },
-  wrapSosmed: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: moderateScale(20),
-  },
-  wrapSignUp: {
-    flexDirection: 'row',
-    alignSelf: 'center',
-    marginBottom: moderateScale(16),
-  },
-  textSignUp: {
-    fontFamily: Fonts.type.medium,
-    color: Colors.accent,
   },
 });

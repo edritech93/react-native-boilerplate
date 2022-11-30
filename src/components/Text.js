@@ -1,21 +1,16 @@
 import React from 'react';
-import {Text as DefaultText} from 'react-native';
+import {StyleSheet} from 'react-native';
+import {Text as DefaultText} from 'react-native-paper';
+import {useTheme} from 'react-native-paper';
 import {moderateScale} from '../libs/scaling';
-import {Fonts, Colors} from '../themes';
+import {Fonts} from '../themes';
 
 export function Text(props) {
   const {children, style, ...restProps} = props;
+  const {colors} = useTheme();
   return (
     <DefaultText
-      style={[
-        {
-          fontFamily: Fonts.type.regular,
-          fontSize: moderateScale(16),
-          lineHeight: moderateScale(25),
-          color: Colors.textDark,
-        },
-        style,
-      ]}
+      style={[styles.textStyle, {color: colors.text}, style]}
       {...restProps}>
       {children}
     </DefaultText>
@@ -25,18 +20,22 @@ export function Text(props) {
 export function Title(props) {
   const {children, style, ...restProps} = props;
   return (
-    <Text
-      style={[
-        {
-          fontFamily: Fonts.type.semiBold,
-          fontSize: moderateScale(24),
-          lineHeight: moderateScale(29),
-          fontWeight: '600',
-        },
-        style,
-      ]}
-      {...restProps}>
+    <Text style={[styles.titleStyle, style]} {...restProps}>
       {children}
     </Text>
   );
 }
+
+const styles = StyleSheet.create({
+  textStyle: {
+    fontFamily: Fonts.type.regular,
+    fontSize: moderateScale(16),
+    lineHeight: moderateScale(25),
+  },
+  titleStyle: {
+    fontFamily: Fonts.type.semiBold,
+    fontSize: moderateScale(24),
+    lineHeight: moderateScale(29),
+    fontWeight: '600',
+  },
+});

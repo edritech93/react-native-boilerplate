@@ -1,68 +1,49 @@
-import PushNotification from 'react-native-push-notification';
-import {Colors} from '../themes';
-let lastId = 0;
+import {NOTIF_CHANNEL_TRANSACTION} from '../constants';
+import notifee, {TriggerType} from '@notifee/react-native';
 
-function showLocalNotification(title, description, data) {
-  lastId++;
+const SCHEDULE_ID = '2147483';
 
-  let notificationData = data;
-
-  if (typeof data === 'string') {
-    notificationData = JSON.parse(data);
-  }
-
-  PushNotification.localNotification({
-    /* Android Only Properties */
-    id: lastId,
-    autoCancel: true,
-    vibrate: true,
-    tag: 'Boilerplate',
-    group: 'Boilerplate',
-    ongoing: false,
-    bigText: description,
-    smallIcon: 'ic_notification',
-    color: Colors.primary,
-    channelId: 'notification_channel',
-
-    /* iOS only properties */
-    alertAction: 'view',
-    category: 'Boilerplate',
-    userInfo: notificationData ? notificationData : {}, // (optional) default: {} (using null throws a JSON value '<null>' error)
-
-    /* iOS and Android properties */
+export async function showLocalNotification(title, description) {
+  await notifee.displayNotification({
     title: title,
-    message: description,
-    playSound: true,
-    soundName: 'default',
-    data: data,
+    body: description,
+    android: {
+      channelId: NOTIF_CHANNEL_TRANSACTION.id,
+      ...NOTIF_CHANNEL_TRANSACTION,
+    },
+    ios: {
+      ...NOTIF_CHANNEL_TRANSACTION,
+    },
   });
 }
 
-function checkPermission(cbk) {
-  return PushNotification.checkPermissions(cbk);
+export async function setupScheduledNotification(
+  title,
+  description,
+  notificationDate,
+) {
+  await notifee.cancelNotification(SCHEDULE_ID);
+  const trigger = {
+    type: TriggerType.TIMESTAMP,
+    timestamp: notificationDate.valueOf(),
+  };
+  await notifee.createTriggerNotification(
+    {
+      id: SCHEDULE_ID,
+      title: title,
+      body: description,
+      android: {
+        channelId: NOTIF_CHANNEL_TRANSACTION.id,
+        ...NOTIF_CHANNEL_TRANSACTION,
+      },
+      ios: {
+        ...NOTIF_CHANNEL_TRANSACTION,
+      },
+    },
+    trigger,
+  );
 }
 
-function requestPermissions() {
-  return PushNotification.requestPermissions();
+export async function cancelScheduleNotification() {
+  await notifee.cancelNotification(SCHEDULE_ID);
 }
-
-function cancelNotif() {
-  PushNotification.cancelLocalNotifications({id: '' + this.lastId});
-}
-
-function cancelAll() {
-  PushNotification.cancelAllLocalNotifications();
-}
-
-function abandonPermissions() {
-  PushNotification.abandonPermissions();
-}
-
-export default {
-  showLocalNotification,
-  checkPermission,
-  requestPermissions,
-  cancelNotif,
-  cancelAll,
-  abandonPermissions,
-};

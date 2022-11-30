@@ -1,29 +1,20 @@
-/**
- *  REQUEST STATE
- */
 export const REQUEST = 'REQUEST';
 export const SUCCESS = 'SUCCESS';
 export const FAILURE = 'FAILURE';
-
-/**
- *  STORAGE STATE
- */
-export const USER = 'USER';
-export const TOKEN = 'TOKEN';
-export const REFRESH_TOKEN = 'REFRESH_TOKEN';
-export const CONFIGURATION = 'CONFIGURATION';
-export const LANGUAGE = 'LANGUAGE';
-export const LOGIN_SAVED = 'LOGIN_SAVED';
-export const DEVICE_TOKEN = 'DEVICE_TOKEN';
-
-/**
- *  APP STATE
- */
-export const CHANGE = 'CHANGE';
-
-/**
- *  ALERT
- */
-export const SET = 'SET';
-export const SHOW = 'SHOW';
 export const CLEAR = 'CLEAR';
+export const REMOVE = 'REMOVE';
+export const CHANGE = 'CHANGE';
+export const TOKEN = 'TOKEN';
+export const API_VERSION = 'API_VERSION';
+export const USER = 'USER';
+export const ADD = 'ADD';
+export const CONFIGURATION = 'CONFIGURATION';
+export const RELOAD = 'RELOAD';
+export const REFRESH_TOKEN = 'REFRESH_TOKEN';
+export const DEVICE_TOKEN = 'DEVICE_TOKEN';
+export const INTRO_HIDE = 'INTRO_HIDE';
+export const COMPANY_LOGO = 'COMPANY_LOGO';
+export const USER_NAME_SAVED = 'USER_NAME_SAVED';
+export const LANGUAGE = 'LANGUAGE';
+export const THEME = 'THEME';
+export const LOGIN_SAVED = 'LOGIN_SAVED';

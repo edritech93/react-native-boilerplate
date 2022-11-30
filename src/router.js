@@ -1,107 +1,49 @@
 import React, {useRef, useEffect} from 'react';
-import {TouchableOpacity, Image} from 'react-native';
+import {Image} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {moderateScale} from './libs/scaling';
-import {IconWithBadge} from './components';
-import {connect} from 'react-redux';
-import {Colors} from './themes';
+import NavigationService from './libs/NavigationService';
 import Splash from './containers/Splash';
 import Login from './containers/Login';
 import Forgot from './containers/Forgot';
-import Home from './containers/Home';
-import Order from './containers/Order';
-import Notification from './containers/Notification';
+import Dashboard from './containers/Dashboard';
 import Profile from './containers/Profile';
 
-const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
-
-const defaultStyle = {
-  headerStyle: {
-    borderBottomWidth: 0, //for ios
-    shadowOpacity: 0, //for ios
-    elevation: 0, //for android
-  },
-  shadowColor: 'transparent',
-  borderBottomWidth: 0,
-  headerBackTitle: ' ',
-  headerTitleAlign: 'center',
-};
-
-function DashboardApp(props) {
-  return (
-    <Tab.Navigator
-      screenOptions={({route}) => ({
-        headerShown: false,
-        tabBarIcon: ({focused, color, size}) => {
-          const homeBadge = props.badge;
-          let badgeTotal = 0;
-
-          if (homeBadge && route.name == 'Notification') {
-            badgeTotal = homeBadge;
-          }
-          return (
-            <IconWithBadge
-              name={route.name}
-              color={color}
-              focused={focused}
-              badgeCount={badgeTotal}
-            />
-          );
-        },
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.divider,
-        tabBarStyle: [
-          {
-            display: 'flex',
-          },
-          null,
-        ],
-      })}>
-      <Tab.Screen name={'Home'} component={Home} />
-      <Tab.Screen name={'Order'} component={Order} />
-      <Tab.Screen name={'Notification'} component={Notification} />
-    </Tab.Navigator>
-  );
-}
-
-const mapStateToProps = (state, ownProps) => {
-  const {badge} = state.app;
-  return {badge};
-};
-
-const mapDispatchToProps = dispatch => {
-  return {};
-};
-
-const Dashboard = connect(mapStateToProps, mapDispatchToProps)(DashboardApp);
+const Stack = createNativeStackNavigator();
 
 export default function StackNavigation(props) {
+  const {theme} = props;
   const REF_NAV = useRef();
 
   useEffect(() => {
     if (REF_NAV && REF_NAV.current) {
-      props.stackRef(REF_NAV);
+      NavigationService.initial(REF_NAV.current);
     }
   }, [REF_NAV]);
 
   return (
-    <NavigationContainer ref={REF_NAV}>
+    <NavigationContainer ref={REF_NAV} theme={theme.theme_nav}>
       <Stack.Navigator
         initialRouteName={'Splash'}
-        screenOptions={({navigation}) => ({
-          ...defaultStyle,
-          headerBackImage: () => {
-            return (
-              <TouchableOpacity
-                onPress={() => navigation.goBack()}
-                style={{padding: moderateScale(8)}}>
-                <Image source={require('./assets/images/arrow_left.png')} />
-              </TouchableOpacity>
-            );
+        screenOptions={() => ({
+          shadowColor: 'transparent',
+          borderBottomWidth: 0,
+          headerTitleAlign: 'center',
+          headerBackTitleVisible: false,
+          contentStyle: {
+            backgroundColor: theme.theme_paper.colors.background,
           },
+          headerBackImage: () => (
+            <Image
+              source={require('./assets/images/arrow_left.png')}
+              style={{
+                width: moderateScale(24),
+                height: moderateScale(24),
+                tintColor: theme.theme_paper.colors.text,
+              }}
+            />
+          ),
         })}>
         <Stack.Screen
           name={'Splash'}

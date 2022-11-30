@@ -1,9 +1,8 @@
 import React, {useEffect} from 'react';
-import {Image, StyleSheet, View} from 'react-native';
+import {Image, StyleSheet, View, Platform} from 'react-native';
 import {PaddedView, Loader} from '../../components';
 import {moderateScale} from '../../libs/scaling';
 import {Helper} from '../../libs/Helper';
-import {Colors} from '../../themes';
 import {API} from '../../libs/api';
 import NavigationService from '../../libs/NavigationService';
 import messaging from '@react-native-firebase/messaging';
@@ -17,27 +16,43 @@ export default function Splash(props) {
     function _loadVersion() {
       const body = {
         package: packageName,
-        version: appVersion + '.0',
+        version: `${appVersion}.0`,
         platform: Platform.OS,
       };
-
       API.singleRequest(API.getVersionCheck(body))
         .then(response => {
-          if (response) {
-            const dataVersion = response.data;
-            if (dataVersion && dataVersion.requireForceUpdate) {
-              NavigationService.resetRoot('ForceUpdate');
-            } else {
-              _loadToken();
-            }
+          const dataVersion = response.data;
+          if (dataVersion && dataVersion.requireForceUpdate) {
+            NavigationService.resetRoot('ForceUpdate');
+          } else {
+            _loadToken();
           }
         })
-        .catch(error => _loadToken());
+        .catch(() => _loadToken());
     }
     _loadVersion();
   }, []);
 
   async function _loadToken() {
+    const token = await Helper.getToken();
+    if (token) {
+      messaging()
+        .getInitialNotification()
+        .then(message => {
+          if (message) {
+            const dataParse = JSON.parse(message.data.custom_notification);
+            _handleClick({data: dataParse}, token);
+          } else {
+            _loadProfile();
+          }
+        })
+        .catch(() => _loadProfile());
+    } else {
+      _gotoLogin();
+    }
+  }
+
+  async function _loadProfile() {
     const token = await Helper.getToken();
     if (token) {
       API.singleRequest(API.getProfile())
@@ -81,12 +96,12 @@ export default function Splash(props) {
 
   return (
     <PaddedView style={styles.container}>
-      {/* <Image
-        source={require('../../assets/images/bodynits_logo_login.png')}
+      <Image
+        source={require('../../assets/images/arrow_left.png')}
         style={styles.imageStyle}
-      /> */}
+      />
       <View style={styles.wrapLoader}>
-        <Loader visible={true} />
+        <Loader visible={true} size={'small'} />
       </View>
     </PaddedView>
   );
@@ -96,7 +111,6 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.white,
   },
   imageStyle: {
     width: moderateScale(220),
@@ -104,6 +118,6 @@ const styles = StyleSheet.create({
   },
   wrapLoader: {
     position: 'absolute',
-    bottom: moderateScale(24),
+    bottom: moderateScale(32),
   },
 });

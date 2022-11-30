@@ -1,11 +1,18 @@
 import React, {useState, useEffect} from 'react';
-import {Image, View as DefaultView} from 'react-native';
+import {Avatar as AvatarPaper} from 'react-native-paper';
 import {moderateScale} from '../libs/scaling';
 import {Helper} from '../libs/Helper';
-import {Colors} from '../themes';
 
 export default function Avatar(props) {
-  const {source, size = moderateScale(44), children, style} = props;
+  const {
+    source,
+    size = moderateScale(44),
+    children,
+    style,
+    type = 'Image',
+    label = 'Default',
+    ...restProps
+  } = props;
 
   const defaultImage = require('../assets/images/profile_placeholder-100.png');
   const [dataSource, setDataSource] = useState(defaultImage);
@@ -26,26 +33,24 @@ export default function Avatar(props) {
   }, [source]);
 
   return (
-    <DefaultView
-      style={[
-        {
-          width: size,
-          height: size,
-        },
-        style,
-      ]}>
-      <Image
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size * 0.5,
-          borderColor: Colors.divider,
-          borderWidth: moderateScale(1),
-        }}
-        source={dataSource}
-        onError={() => setDataSource(defaultImage)}
-      />
-      {children}
-    </DefaultView>
+    <>
+      {type === 'Icon' && (
+        <AvatarPaper.Icon
+          size={size}
+          icon={source ?? dataSource}
+          {...restProps}
+        />
+      )}
+      {type === 'Image' && (
+        <AvatarPaper.Image
+          size={size}
+          source={source ?? dataSource}
+          {...restProps}
+        />
+      )}
+      {type === 'Text' && (
+        <AvatarPaper.Text size={size} label={label} {...restProps} />
+      )}
+    </>
   );
 }

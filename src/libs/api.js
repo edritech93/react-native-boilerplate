@@ -4,11 +4,10 @@ import {Helper} from './Helper';
 import axios from 'axios';
 
 const CancelToken = axios.CancelToken;
-let terminateAPI;
 
 const CONTENT_TYPE = {
-  FORM_DATA: 'form-data',
-  URLENCODED: 'urlencoded',
+  FORM_DATA: {'Content-Type': 'multipart/form-data'},
+  URLENCODED: {'Content-Type': 'application/x-www-form-urlencoded'},
 };
 
 const SERVER = {
@@ -36,60 +35,45 @@ export class Api {
       default:
         break;
     }
-
     let options = {
       url: request.url,
-      method: request.method ? request.method : 'get', // default
+      method: request?.method ?? 'get',
       baseURL: baseUrl,
       timeout: request.timeout === 0 ? request.timeout : 1000 * 90, // default is `0` (no timeout)
       cancelToken: new CancelToken(function (cancel) {}),
     };
-
     if (request.auth) {
       options.auth = request.auth;
     }
-
-    let optionsHeader;
+    let optHeader = {};
     const token = await Helper.getToken();
     if (token) {
-      let userToken = `Bearer ${token}`;
-      optionsHeader = {Authorization: userToken};
+      optHeader = {Authorization: `Bearer ${token}`};
     }
-
     if (request.contentType) {
-      if (request.contentType === CONTENT_TYPE.URLENCODED) {
-        optionsHeader = {
-          ...optionsHeader,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        };
-      } else if (request.contentType === CONTENT_TYPE.FORM_DATA) {
-        optionsHeader = {
-          ...optionsHeader,
-          'Content-Type': 'multipart/form-data',
-        };
-      }
+      optHeader = {...optHeader, ...request.contentType};
     }
-
-    options.headers = {...optionsHeader};
-
+    options.headers = {...optHeader};
     if (request.params) {
       options.params = request.params;
     }
-
     if (request.data) {
       options.data = request.data;
     }
-
-    const res = new axios.request(options);
-    console.log(`${Helper.nowTime()} REQUEST => `, options);
-    return res;
+    const response = new axios.request(options);
+    if (__DEV__) {
+      console.log(`${Helper.nowTime()} REQUEST => `, options);
+    }
+    return response;
   }
 
   singleRequest(request) {
     return new Promise(function (resolve, reject) {
       request
         .then(response => {
-          console.log(`${Helper.nowTime()} RESPONSE => `, response);
+          if (__DEV__) {
+            console.log(`${Helper.nowTime()} RESPONSE => `, response);
+          }
           resolve(response);
         })
         .catch(error => {
@@ -99,11 +83,13 @@ export class Api {
     });
   }
 
-  requestMultiple(requests) {
+  multipleRequest(requests) {
     return new Promise(function (resolve, reject) {
       new axios.all(requests)
         .then(response => {
-          console.log(`${Helper.nowTime()} RESPONSE => `, response);
+          if (__DEV__) {
+            console.log(`${Helper.nowTime()} RESPONSE => `, response);
+          }
           resolve(response);
         })
         .catch(error => {
@@ -119,7 +105,7 @@ export class Api {
         url: `/api/mobile-apps/${args.package}/${args.platform}/check-version`,
         method: 'post',
         data: args,
-        baseUrl: 'https://localhost:8081/',
+        baseUrl: 'https://license.cloudapp.id',
         forceFetch: true,
       },
       SERVER.OTHER,
@@ -132,7 +118,7 @@ export class Api {
         method: 'post',
         url: 'connect/token',
         data: args,
-        contentType: CONTENT_TYPE.URLENCODED,
+        contentType: CONTENT_TYPE.FORM_DATA,
         auth: BASIC_AUTH,
       },
       SERVER.IDENTITY_CLIENT,
@@ -172,10 +158,12 @@ export class Api {
 }
 
 function _handleError(error) {
-  console.log(`${Helper.nowTime()} ERROR => `, error?.response ?? error);
+  if (__DEV__) {
+    console.log(`${Helper.nowTime()} ERROR => `, error?.response ?? error);
+  }
   const status = error?.response?.status ?? null;
   let message = null;
-  if (error.response.data) {
+  if (error?.response?.data) {
     message =
       error.response.data.message ||
       error.response.data.Message ||
@@ -184,15 +172,12 @@ function _handleError(error) {
   if (status === 401) {
     message = '401';
   }
-
   if (status === 404) {
     message = 'Server not found';
   }
-
   if (status >= 500 || !message) {
     message = 'Oops! Something went wrong.\nPlease try again in a few minutes.';
   }
-
   const dataMessage = {
     message: message,
     status: status,
@@ -203,4 +188,4 @@ function _handleError(error) {
 
 const API = new Api();
 
-export {API, terminateAPI};
+export {API};

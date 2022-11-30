@@ -5,53 +5,54 @@ import {Helper} from '../libs/Helper';
 import {API} from '../libs/api';
 import NavigationService from '../libs/NavigationService';
 
-export function* viewAlertShow(action) {
-  try {
-    const {args} = action;
-    if (args.message && args.message != 401) {
-      let dataMessage = args.message;
-      if (typeof args.message === 'object') {
-        dataMessage = JSON.stringify(args.message);
-      }
+export function* handleShowAlert(action) {
+  const {args} = action;
+  if (args) {
+    const {title = 'Boilerplate', message, errorCode} = args;
+    if (message && errorCode !== 401) {
+      const dataMessage =
+        typeof message === 'object' ? JSON.stringify(message) : message;
       setTimeout(() => {
-        Alert.alert('Boilerplate', dataMessage, [
+        Alert.alert(title, dataMessage, [
           {
-            text: 'OK',
+            text: 'Ok',
             onPress: () => {},
           },
         ]);
       }, 500);
-    } else if (args.message == 401) {
-      _refreshToken();
+    } else {
+      if (errorCode === 401) {
+        _refreshToken();
+      }
     }
-  } catch (error) {
-    console.log('viewAlertShow => ', error);
   }
 }
 
-async function _refreshToken() {
-  const refreshToken = await Helper.getRefreshToken();
-  if (refreshToken) {
-    let body = {
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-    };
+let countRefresh = 0;
 
+async function _refreshToken() {
+  const token = await Helper.getRefreshToken();
+  if (token && countRefresh < 3) {
+    const body = new FormData();
+    body.append('grant_type', 'refresh_token');
+    body.append('refresh_token', token);
     API.singleRequest(API.login(body))
       .then(response => {
         const dataLogin = response.data;
         Helper.setToken(dataLogin.access_token);
         Helper.setRefreshToken(dataLogin.refresh_token);
-        NavigationService.resetRoot('Dashboard');
+        NavigationService.resetRoot('Splash');
+        countRefresh++;
       })
-      .catch(error => {
+      .catch(() => {
         NavigationService.resetRoot('Login');
       });
   } else {
+    countRefresh = 0;
     NavigationService.resetRoot('Login');
   }
 }
 
 export function* watchAlertShow() {
-  yield takeEvery(ALERT.SHOW, viewAlertShow);
+  yield takeEvery(ALERT.ADD, handleShowAlert);
 }

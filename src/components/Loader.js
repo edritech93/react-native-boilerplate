@@ -1,11 +1,30 @@
 import React from 'react';
-import {View as DefaultView, ActivityIndicator, StyleSheet} from 'react-native';
+import {View, StyleSheet} from 'react-native';
+import {ActivityIndicator} from 'react-native-paper';
 import {Colors} from '../themes';
+
+export default function Loader(props) {
+  const {
+    visible = false,
+    size = 'small',
+    color = Colors.primary,
+    style,
+  } = props;
+
+  if (visible) {
+    return (
+      <View style={[styles.container, style]}>
+        <ActivityIndicator animating={visible} size={size} color={color} />
+      </View>
+    );
+  } else {
+    return null;
+  }
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
     position: 'absolute',
     top: 0,
     bottom: 0,
@@ -15,17 +34,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-
-export default function Loader(props) {
-  const {visible = false, color = Colors.primary, style} = props;
-
-  if (visible) {
-    return (
-      <DefaultView style={[styles.container, style]}>
-        <ActivityIndicator size={'large'} color={color} />
-      </DefaultView>
-    );
-  } else {
-    return null;
-  }
-}

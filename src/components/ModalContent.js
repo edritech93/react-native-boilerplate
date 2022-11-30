@@ -1,43 +1,52 @@
 import React from 'react';
-import {
-  View as DefaultView,
-  StyleSheet,
-  StatusBar,
-  Platform,
-} from 'react-native';
+import {View, StyleSheet} from 'react-native';
+import {Provider as PaperProvider} from 'react-native-paper';
 import {moderateScale} from '../libs/scaling';
-import {Colors} from '../themes';
+import {useTheme} from 'react-native-paper';
+import Modal from 'react-native-modalbox';
+
+const ModalContent = React.forwardRef((props, ref) => {
+  const {colors} = useTheme();
+  const {getRef, style, children, haveLine = true, ...restProps} = props;
+
+  return (
+    <Modal
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+        style,
+      ]}
+      ref={ref}
+      transparent={true}
+      position={'bottom'}
+      entry={'bottom'}
+      backdropColor={'black'}
+      swipeArea={50}
+      {...restProps}>
+      <PaperProvider theme={useTheme()}>
+        {haveLine && (
+          <View style={[styles.linePanel, {backgroundColor: colors.text}]} />
+        )}
+        {children}
+      </PaperProvider>
+    </Modal>
+  );
+});
 
 const styles = StyleSheet.create({
-  boxPanel: {
-    height: moderateScale(20),
-    backgroundColor: 'transparent',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: moderateScale(10),
+  container: {
+    height: null,
   },
   linePanel: {
+    alignSelf: 'center',
     width: moderateScale(30),
     height: moderateScale(4),
     borderRadius: moderateScale(8),
-    backgroundColor: Colors.black,
+    marginTop: moderateScale(8),
+    marginBottom: moderateScale(16),
   },
 });
-
-const ModalContent = props => {
-  const {style, children, ...restProps} = props;
-  return (
-    <DefaultView style={style} {...restProps}>
-      {Platform.OS === 'android' ? (
-        <StatusBar backgroundColor="#00000080" barStyle="light-content" />
-      ) : null}
-
-      <DefaultView style={styles.boxPanel}>
-        <DefaultView style={styles.linePanel} />
-      </DefaultView>
-      {children}
-    </DefaultView>
-  );
-};
 
 export default ModalContent;

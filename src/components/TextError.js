@@ -1,22 +1,26 @@
 import React from 'react';
 import {StyleSheet} from 'react-native';
+import {HelperText} from 'react-native-paper';
 import {moderateScale} from '../libs/scaling';
-import {Colors} from '../themes';
-import {Text} from './Text';
 
 export default function TextError(props) {
-  const {isError = false, message, style} = props;
-  if (isError) {
-    return <Text style={[styles.txtStyle, style]}>{message}</Text>;
-  } else {
-    return null;
-  }
+  const {visible = false, message, style, type = 'error', ...restProps} = props;
+
+  return (
+    <HelperText
+      type={type}
+      visible={visible}
+      padding={'normal'}
+      style={[style, styles.container]}
+      {...restProps}>
+      {message}
+    </HelperText>
+  );
 }
 
 const styles = StyleSheet.create({
-  txtStyle: {
-    fontSize: moderateScale(10),
-    lineHeight: moderateScale(16),
-    color: Colors.red,
+  container: {
+    marginBottom: moderateScale(-8),
+    marginTop: moderateScale(-2),
   },
 });

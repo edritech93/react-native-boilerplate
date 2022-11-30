@@ -1,16 +1,17 @@
 import React, {useEffect, useRef} from 'react';
-import {FlatList as DefaultFlatList} from 'react-native';
+import {FlatList as DefaultFlatList, StyleSheet} from 'react-native';
 
 export default function FlatList(props) {
-  const {children, style, onLimitUp, onLimitDown, ...restProps} = props;
+  const {children, style, onLimitUp, onLimitDown, flatListRef, ...restProps} =
+    props;
 
-  const flatListRef = useRef('FLAT_LIST');
+  const REF_LIST = useRef();
 
   useEffect(() => {
-    if (props.flatListRef) {
-      props.flatListRef(flatListRef.current);
+    if (flatListRef) {
+      flatListRef(REF_LIST.current);
     }
-  }, []);
+  }, [flatListRef]);
 
   const _handleScroll = event => {
     try {
@@ -31,14 +32,9 @@ export default function FlatList(props) {
 
   return (
     <DefaultFlatList
-      style={[
-        {
-          flex: 1,
-        },
-        style,
-      ]}
-      ref={flatListRef}
-      keyExtractor={(item, index) => index.toString()}
+      style={[styles.container, style]}
+      ref={REF_LIST}
+      keyExtractor={(_, index) => index.toString()}
       onScroll={_handleScroll}
       scrollEventThrottle={500}
       showsHorizontalScrollIndicator={false}
@@ -48,3 +44,9 @@ export default function FlatList(props) {
     </DefaultFlatList>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

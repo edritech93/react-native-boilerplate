@@ -5,12 +5,16 @@ import {
   REFRESH_TOKEN,
   CONFIGURATION,
   CHANGE,
-  SHOW,
   LANGUAGE,
   LOGIN_SAVED,
   DEVICE_TOKEN,
+  THEME,
+  ADD,
+  REQUEST,
+  SUCCESS,
+  FAILURE,
 } from '../constants/state';
-const appNamespace = defineAction('BOILERPLATE');
+const appNamespace = defineAction('BOILERPLATE_RN');
 
 export const STORAGE = defineAction(
   'STORAGE',
@@ -22,6 +26,7 @@ export const STORAGE = defineAction(
     LANGUAGE,
     LOGIN_SAVED,
     DEVICE_TOKEN,
+    THEME,
   ],
   appNamespace,
 );
@@ -30,4 +35,19 @@ export const CONNECTION_STATUS = defineAction(
   [CHANGE],
   appNamespace,
 );
-export const ALERT = defineAction('ALERT', [SHOW], appNamespace);
+export const ALERT = defineAction('ALERT', [ADD], appNamespace);
+export const THEME_APP_ID = defineAction(
+  'THEME_APP_ID',
+  [CHANGE],
+  appNamespace,
+);
+export const LANGUAGE_APP_ID = defineAction(
+  'LANGUAGE_APP_ID',
+  [CHANGE],
+  appNamespace,
+);
+export const PROFILE = defineAction(
+  'PROFILE',
+  [REQUEST, SUCCESS, FAILURE, CHANGE],
+  appNamespace,
+);

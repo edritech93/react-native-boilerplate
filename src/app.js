@@ -1,38 +1,27 @@
-import React, {useEffect} from 'react';
-import {StatusBar, SafeAreaView, Platform, LogBox} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {StatusBar, SafeAreaView, StyleSheet} from 'react-native';
+import {Loader} from './components';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {showLocalNotification} from './libs/NotificationService';
+import {PersistGate} from 'redux-persist/integration/react';
+import {getThemeApp, THEME_ID} from './themes/theme_app';
+import {NOTIF_CHANNEL_TRANSACTION} from './constants';
 import {connectionChange} from './actions/app';
-import {DATA_LANGUAGE} from './constants';
-import {STORAGE} from './actions/types';
+import {strings} from './constants/localize';
 import {Provider} from 'react-redux';
 import {Helper} from './libs/Helper';
-import {Colors} from './themes';
-import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import NotificationService from './libs/NotificationService';
+import {Provider as PaperProvider} from 'react-native-paper';
+import notifee, {EventType} from '@notifee/react-native';
 import messaging from '@react-native-firebase/messaging';
 import NavigationService from './libs/NavigationService';
 import NetInfo from '@react-native-community/netinfo';
 import configureStore from './libs/configureStore';
-import ObjStorage from './libs/ObjStorage';
-import strings from './constants/localize';
 import StackNavigation from './router';
 
-const PushNotification = require('react-native-push-notification');
-const store = configureStore();
-LogBox.ignoreAllLogs();
+const {store, persistor} = configureStore();
 
 export default function App(props) {
-  useEffect(() => {
-    async function _loadLanguage() {
-      const languageStorage = await ObjStorage.get(STORAGE.LANGUAGE);
-      if (languageStorage) {
-        strings.setLanguage(languageStorage.id);
-      } else {
-        ObjStorage.set(STORAGE.LANGUAGE, DATA_LANGUAGE[0]);
-        strings.setLanguage(DATA_LANGUAGE[0].id);
-      }
-    }
-    _loadLanguage();
-  }, []);
+  const [themeState, setThemeState] = useState(getThemeApp(THEME_ID.SYSTEM));
 
   useEffect(() => {
     function _setupNetwork() {
@@ -40,9 +29,7 @@ export default function App(props) {
         store.dispatch(connectionChange(state.isConnected));
       });
       NetInfo.addEventListener(state => {
-        console.log(
-          `Network type: ${state.type}, status: ${state.isConnected}`,
-        );
+        console.log(`Type: ${state.type}, Status: ${state.isConnected}`);
         store.dispatch(connectionChange(state.isConnected));
       });
     }
@@ -52,70 +39,90 @@ export default function App(props) {
   useEffect(() => {
     function _setupNotification() {
       messaging().onMessage(message => {
-        const {title, body} = message.notification;
-        NotificationService.showLocalNotification(
-          title,
-          body,
-          message.data.custom_notification,
-        );
+        const {title, body, custom_notification} = message.notification;
+        showLocalNotification(title, body, custom_notification);
       });
-      messaging().setBackgroundMessageHandler(async message => {
-        console.log('Message handled in the background!', message);
-      });
-      PushNotification.createChannel(
-        {
-          channelId: 'notification_channel',
-          channelName: 'BBACommunicator Notification',
-          channelDescription: 'BBACommunicator Notification channel',
-        },
-        created => {},
+      messaging().setBackgroundMessageHandler(async () => {});
+      messaging().onNotificationOpenedApp(message =>
+        _handleClick({data: JSON.parse(message.data.custom_notification)}),
       );
-      PushNotification.configure({
-        onRegister: function (token) {},
-        onNotification: function (message) {
-          try {
-            if (message.foreground || message.userInteraction) {
-              _handleClick({data: message.data});
-            }
-            if (Platform.OS === 'ios') {
-              message.finish(PushNotificationIOS.FetchResult.NoData);
-            }
-          } catch (error) {
-            console.log('error', error);
-          }
-        },
-        permissions: {
-          alert: true,
-          badge: true,
-          sound: true,
-        },
-        popInitialNotification: true,
-        requestPermissions: true,
-      });
     }
     _setupNotification();
   }, []);
 
+  useEffect(() => {
+    async function _setupChannel() {
+      await notifee.requestPermission();
+      await notifee.createChannel(NOTIF_CHANNEL_TRANSACTION);
+    }
+    _setupChannel();
+  }, []);
+
+  useEffect(() => {
+    function _setNotifeeListener() {
+      notifee.onForegroundEvent(objAction => {
+        // NOTE: for handle event
+        switch (objAction.type) {
+          case EventType.DISMISSED:
+            console.log('User Dismissed Notification', objAction.detail);
+            break;
+          case EventType.PRESS:
+            console.log('User Press Notification', objAction.detail);
+            break;
+          default:
+            break;
+        }
+        _handleClick(objAction.detail);
+      });
+    }
+    _setNotifeeListener();
+  }, []);
+
+  useEffect(() => {
+    const _listenerState = () => {
+      const {themeAppId, languageAppId} = Object.fromEntries(
+        store.getState().app.entries(),
+      );
+      setThemeState(getThemeApp(themeAppId));
+      strings.setLanguage(languageAppId);
+    };
+    store.subscribe(_listenerState);
+  }, []);
+
   async function _handleClick(message) {
     if (message && message.data) {
-      const {screen, itemId} = message.data;
       const token = await Helper.getToken();
-      if (message && token && screen && itemId) {
-        NavigationService.navigate(screen, {
-          Id: itemId,
+      const {Id, Screen, isApprover} = message.data;
+      if (token && Screen) {
+        NavigationService.navigate(Screen, {
+          Id: Id,
+          isApprover: isApprover,
         });
       }
     }
   }
 
   return (
-    <SafeAreaView style={{flex: 1}} forceInset={{bottom: 'always'}}>
-      <StatusBar barStyle={'dark-content'} backgroundColor={Colors.white} />
+    <SafeAreaView style={styles.flex1} forceInset={{bottom: 'always'}}>
+      <StatusBar
+        barStyle={themeState.isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={themeState.theme_nav.colors.background}
+      />
       <Provider store={store}>
-        <StackNavigation
-          stackRef={ref => NavigationService.initial(ref.current)}
-        />
+        <PersistGate loading={<Loader visible={true} />} persistor={persistor}>
+          <PaperProvider theme={themeState.theme_paper}>
+            <GestureHandlerRootView style={styles.flex1}>
+              <StackNavigation theme={themeState} />
+            </GestureHandlerRootView>
+          </PaperProvider>
+        </PersistGate>
       </Provider>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  flex1: {
+    flex: 1,
+  },
+});

@@ -1,8 +1,21 @@
 import React from 'react';
-import {View as DefaultView, StyleSheet} from 'react-native';
+import {View, StyleSheet} from 'react-native';
+import {Badge as PaperBadge} from 'react-native-paper';
 import {moderateScale} from '../libs/scaling';
 import {Colors} from '../themes';
-import {Text} from './Text';
+
+export default function Badge(props) {
+  const {count = 0, ...restProps} = props;
+  if (count > 0) {
+    return (
+      <View style={styles.wrapBadge}>
+        <PaperBadge {...restProps}>{count}</PaperBadge>
+      </View>
+    );
+  } else {
+    return null;
+  }
+}
 
 const styles = StyleSheet.create({
   wrapBadge: {
@@ -14,24 +27,3 @@ const styles = StyleSheet.create({
     padding: moderateScale(2),
   },
 });
-
-export default function Badge(props) {
-  const {count} = props;
-
-  if (count) {
-    return (
-      <DefaultView style={[styles.wrapBadge, props.style]}>
-        <Text
-          style={{
-            fontSize: moderateScale(12),
-            lineHeight: moderateScale(18),
-            color: Colors.white,
-          }}>
-          {count}
-        </Text>
-      </DefaultView>
-    );
-  } else {
-    return null;
-  }
-}

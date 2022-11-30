@@ -1,63 +1,35 @@
 import React from 'react';
-import {
-  TouchableOpacity as DefaultTouchableOpacity,
-  View as DefaultView,
-} from 'react-native';
+import {StyleSheet, TouchableOpacity} from 'react-native';
+import {Surface} from 'react-native-paper';
 import {moderateScale} from '../libs/scaling';
-import {Colors} from '../themes';
 
 export function Card(props) {
-  const {children, style, ...restProps} = props;
+  const {children, style, onPress, ...restProps} = props;
   return (
-    <DefaultTouchableOpacity
-      style={[
-        {
-          flex: 1,
-          borderRadius: moderateScale(4),
-          shadowColor: '#0000004C',
-          elevation: moderateScale(1),
-          shadowOffset: {
-            width: 0,
-            height: moderateScale(1),
-          },
-          borderWidth: moderateScale(1),
-          borderColor: '#F1F4FB',
-          shadowRadius: moderateScale(1),
-          backgroundColor: Colors.white,
-          shadowOpacity: moderateScale(1),
-        },
-        style,
-      ]}
-      {...restProps}>
-      {children}
-    </DefaultTouchableOpacity>
+    <TouchableOpacity style={styles.flex0} onPress={onPress}>
+      <Surface style={[styles.container, style]} elevation={1} {...restProps}>
+        {children}
+      </Surface>
+    </TouchableOpacity>
   );
 }
 
 export function CardView(props) {
   const {children, style, ...restProps} = props;
   return (
-    <DefaultView
-      style={[
-        {
-          flex: 1,
-          borderRadius: moderateScale(4),
-          shadowColor: '#0000004C',
-          elevation: moderateScale(1),
-          shadowOffset: {
-            width: 0,
-            height: moderateScale(1),
-          },
-          borderWidth: moderateScale(1),
-          borderColor: '#F1F4FB',
-          shadowRadius: moderateScale(1),
-          backgroundColor: Colors.white,
-          shadowOpacity: moderateScale(1),
-        },
-        style,
-      ]}
-      {...restProps}>
+    <Surface style={[styles.container, style]} elevation={1} {...restProps}>
       {children}
-    </DefaultView>
+    </Surface>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    borderRadius: moderateScale(8),
+    marginBottom: 1,
+  },
+  flex0: {
+    flex: 0,
+  },
+});

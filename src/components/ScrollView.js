@@ -1,19 +1,19 @@
 import React, {useRef, useEffect} from 'react';
-import {ScrollView as DefaultScrollView} from 'react-native';
+import {ScrollView as DefaultScrollView, StyleSheet} from 'react-native';
 
 export default function ScrollView(props) {
   const {children, style, onLimitUp, onLimitDown, scrollRef, ...restProps} =
     props;
 
-  const SCROLL_REF = useRef('SCROLL_REF');
+  const SCROLL_REF = useRef();
 
   useEffect(() => {
     if (scrollRef) {
       scrollRef(SCROLL_REF.current);
     }
-  }, []);
+  }, [scrollRef]);
 
-  const handleScroll = event => {
+  const _handleScroll = event => {
     try {
       const limit = event.nativeEvent.contentOffset.y;
       if (limit > 30) {
@@ -26,20 +26,15 @@ export default function ScrollView(props) {
         }
       }
     } catch (error) {
-      console.log('handleScroll => ', error);
+      console.log('_handleScroll => ', error);
     }
   };
 
   return (
     <DefaultScrollView
-      style={[
-        {
-          flex: 1,
-        },
-        style,
-      ]}
+      style={[styles.container, style]}
       ref={SCROLL_REF}
-      onScroll={handleScroll}
+      onScroll={_handleScroll}
       scrollEventThrottle={500}
       showsHorizontalScrollIndicator={false}
       showsVerticalScrollIndicator={false}
@@ -48,3 +43,9 @@ export default function ScrollView(props) {
     </DefaultScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
